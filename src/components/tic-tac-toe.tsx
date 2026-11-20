@@ -204,20 +204,64 @@ export function TicTacToe() {
             {/* Mobile: score sits on the game card (desktop shows it in the settings column) */}
             <div className="shrink-0 md:hidden">{scoreBoard}</div>
 
-            <div className="flex shrink-0 justify-center">
-              <Badge
-                variant={winner ? "default" : draw ? "secondary" : "outline"}
-                className="h-7 gap-1.5 px-3 text-sm"
-                aria-live="polite"
-              >
-                {winner && <Trophy />}
-                {status}
-              </Badge>
+            {/* Turn indicator: the active player's chip glows in their colour; result once the game ends. */}
+            <div aria-live="polite" className="flex h-12 shrink-0 items-center justify-center gap-2">
+              <span className="sr-only">{status}</span>
+              {over ? (
+                <Badge
+                  aria-hidden
+                  variant={winner ? "default" : "secondary"}
+                  className="h-9 gap-2 px-4 text-base"
+                >
+                  {winner && <Trophy />}
+                  {status}
+                </Badge>
+              ) : (
+                (["X", "O"] as const).map((p) => {
+                  const active = turn === p;
+                  return (
+                    <div
+                      key={p}
+                      aria-hidden
+                      className={cn(
+                        "flex min-w-0 flex-1 items-center gap-2 rounded-full border-2 px-3 py-1.5 transition-all duration-300",
+                        active
+                          ? cn("scale-105 shadow-md", theme.turn[p].chip)
+                          : "scale-95 border-transparent bg-muted/40 opacity-45",
+                      )}
+                    >
+                      <span className="size-6 shrink-0">
+                        <PieceView piece={theme.pieces[p]} />
+                      </span>
+                      <span className="flex min-w-0 flex-col leading-tight">
+                        <span className={cn("truncate text-sm font-semibold", theme.accent[p])}>
+                          {nameOf(p)}
+                        </span>
+                        <span className="truncate text-[0.7rem] text-muted-foreground">
+                          {active ? (cpuThinking ? "Thinking…" : "Your move") : "Waiting"}
+                        </span>
+                      </span>
+                      {active && (
+                        <span className={cn("relative ml-auto flex size-2.5 shrink-0", theme.accent[p])}>
+                          <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-75" />
+                          <span className="relative inline-flex size-2.5 rounded-full bg-current" />
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             {/* Phones: the board takes whatever height is left (up to 20rem) and stays square. */}
             <div className="flex justify-center max-md:h-80 max-md:min-h-36 max-md:shrink max-md:[container-type:size]">
-            <div className="mx-auto grid aspect-square w-full max-w-xs grid-cols-3 grid-rows-3 gap-2 max-md:size-[min(100cqw,100cqh)] max-md:max-w-none">
+            <div
+              className={cn(
+                "mx-auto grid aspect-square w-full max-w-xs grid-cols-3 grid-rows-3 gap-2 rounded-2xl p-1.5 ring-2 ring-transparent transition-shadow duration-300 max-md:size-[min(100cqw,100cqh)] max-md:max-w-none",
+                // Board glows in the current player's colour.
+                !over && theme.turn[turn].ring,
+              )}
+            >
               {board.map((cell, i) => {
                 const inWin = winner?.line.includes(i);
                 const canPlay = !cell && !over && !cpuThinking;
